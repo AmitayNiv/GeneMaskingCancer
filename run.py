@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import torch
 import wandb
-from run_tasks import run_train,run_create_and_save_masks,run_masks_and_vis,run_gsea,run_heatmap_procces,run_per_sample_gsea_compare,run_per_sample_gsea
+from run_tasks import run_train,eval_ensemble#,run_create_and_save_masks,run_masks_and_vis,run_gsea,run_heatmap_procces,run_per_sample_gsea_compare,run_per_sample_gsea
 import os
 import copy
 
@@ -16,19 +16,19 @@ class arguments(object):
       self.seed = 3407
       self.cls_epochs = 10
       self.g_epochs = 10
-      self.cls_lr = 0.002
+      self.cls_lr = 0.001
       self.g_lr = 0.0002
       self.weight_decay=5e-4
       self.dropout=0.2
       self.batch_size = 50
-      self.batch_factor = 1
+      self.batch_factor = 4
       self.train_ratio = 0.7
       self.data_type =  "all"
       self.wandb_exp = False
       self.load_pretraind_weights = False
-      self.save_weights = False
-      self.iterations = 5
-      self.working_models = {"F":True,"g":True,"F2":False,"H":True,"XGB":True,"RF":True}
+      self.save_weights = True
+      self.iterations = 1
+      self.working_models = {"F":True,"g":True,"F2":False,"H":False,"XGB":False,"RF":False}
       self.task = "Train"
 
 
@@ -49,24 +49,24 @@ def run(args):
     if args.task =="Train":
         print("Starting Train")
         run_train(args,device)
-    elif args.task =="Mask Creation":
-        print("Starting Mask Creation")
-        run_create_and_save_masks(args,device)
-    elif args.task =="Masks Visualizatin":
-        print("Starting Masks Visualizatin")
-        run_masks_and_vis(args,device)
-    elif args.task =="GSEA":
-        print("Starting GSEA Analisys")
-        run_gsea(args,device)
-    elif args.task =="Heatmaps":
-        print("Starting Important Heatmaps Calculation")
-        run_heatmap_procces(args,device)
-    elif args.task =="GSEA per Sample Compariosn":
-        print("Starting GSEA per Sample Compariosn")
-        run_per_sample_gsea_compare(args,device)
-    elif args.task =="GSEA per Sample":
-        print("Starting GSEA per Sample")
-        run_per_sample_gsea(args,device)
+    elif args.task =="eval_ensemble":
+         print("Starting Mask Creation")
+         eval_ensemble(args,device)
+    # elif args.task =="Masks Visualizatin":
+    #     print("Starting Masks Visualizatin")
+    #     run_masks_and_vis(args,device)
+    # elif args.task =="GSEA":
+    #     print("Starting GSEA Analisys")
+    #     run_gsea(args,device)
+    # elif args.task =="Heatmaps":
+    #     print("Starting Important Heatmaps Calculation")
+    #     run_heatmap_procces(args,device)
+    # elif args.task =="GSEA per Sample Compariosn":
+    #     print("Starting GSEA per Sample Compariosn")
+    #     run_per_sample_gsea_compare(args,device)
+    # elif args.task =="GSEA per Sample":
+    #     print("Starting GSEA per Sample")
+    #     run_per_sample_gsea(args,device)
 
         
 

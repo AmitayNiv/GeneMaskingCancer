@@ -12,7 +12,7 @@ import joblib
 import xgboost as xgb
 from sklearn.ensemble import RandomForestClassifier
 import gseapy as gp
-from data_loading import Data
+from data_loading import PC_Data
 from time import time
 import datetime
 import eli5
@@ -137,27 +137,6 @@ def init_models(args,data,device,base = ""):
     return cls,g_model
     
 
-def load_datasets_list(args):
-    """
-    Loading name and paths of the datasets to run on
-
-    Arguments:
-    args [obj] - arguments
-
-    Return:
-    datasets_list [list] - list of datasets
-    """
-    if isinstance(args.data_type,str):
-        if args.data_type!="all":
-            args.data_type = [args.data_type]
-    datasets_list = []
-    for i,f in enumerate(os.scandir(r"./data/singleCell/")):
-        if f.name == 'features.csv' or "-adt" in f.name :
-            continue
-        if args.data_type == "all" or f.name[:-5] in args.data_type:
-            datasets_list.append(f)
-                
-    return datasets_list
 
 
 def save_weights(cls,g,data,base = ""):
@@ -202,21 +181,21 @@ def load_weights(data,device,base = "",only_g=False):
     """
     base_print = base+"_" if base != "" else base
     if base =="XGB":
-        print(f"Loading pre-trained weights for {base} classifier")
-        cls = xgb.XGBClassifier(objective="multi:softproba")
+        print(f"Loading pre-trained weights for {base} classifier {data.data_name}")
+        cls = xgb.XGBClassifier()
         cls.load_model(f"./weights/{data.data_name}/{base}.json")
         g_model = None
     elif base =="RF":
-        print(f"Loading pre-trained weights for {base} classifier")
+        print(f"Loading pre-trained weights for {base} classifier {data.data_name}")
         cls = joblib.load(f"./weights/{data.data_name}/{base}.joblib")
         g_model = None
     else:
         if only_g:
             cls = None
         else:
-            print(f"Loading pre-trained weights for {base} classifier")
-            cls = torch.load(f"./weights/{data.data_name}/{base_print}cls.pt")#.to(device)
-        print(f"Loading pre-trained weights for {base} G model")
+            print(f"Loading pre-trained weights for {base} classifier {data.data_name}")
+            cls = torch.load(f"./weights/{data.data_name}/{base_print}cls.pt").to(device)
+        print(f"Loading pre-trained weights for {base} G model {data.data_name}")
         g_model = torch.load(f"./weights/{data.data_name}/{base_print}g.pt").to(device)
     return cls,g_model
 

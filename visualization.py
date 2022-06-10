@@ -8,7 +8,7 @@ from sklearn.manifold import TSNE
 from sklearn.decomposition import PCA
 from pkg_resources import safe_name
 import umap
-from utils import load_datasets_list
+
 
 
 def visulaize_tsne(table,table_name,dataset,wandb_exp=None):

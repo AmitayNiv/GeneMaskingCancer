@@ -12,6 +12,7 @@ class Classifier(nn.Module):
         self.fc4= nn.Linear((D_in//(first_division*4)), number_of_classes)
         self.drop = nn.Dropout(p=dropout)
         self.selu = nn.SELU()
+        self.sig = nn.Sigmoid()
              
     def forward(self, x):
         x = self.selu(self.fc1(x))
@@ -20,8 +21,9 @@ class Classifier(nn.Module):
         x = self.selu(self.fc3(x))
         x = self.drop(x)
         x = self.fc4(x)
+        x = self.sig(x)
 
-        return x
+        return torch.squeeze(x)
 
 class G_Model(nn.Module):
     def __init__(self, input_dim,first_division = 2):
