@@ -294,7 +294,7 @@ def train_H(args,device,data_obj,g_model,model=None,wandb_exp=None,train_H=True)
 
     if model == None:
         n_features = data_obj.n_features*2 if train_H else data_obj.n_features
-        model = Classifier(n_features ,dropout=args.dropout,number_of_classes=data_obj.number_of_classes)
+        model = Classifier(n_features ,dropout=args.dropout,number_of_classes=data_obj.number_of_classes,first_division=4)
         model = model.to(device)
     criterion = nn.BCELoss()
     optimizer = optim.Adam(model.parameters(), lr=args.cls_lr)
@@ -329,7 +329,7 @@ def train_H(args,device,data_obj,g_model,model=None,wandb_exp=None,train_H=True)
                 optimizer.zero_grad()
                 scheduler.step()
 
-            if (global_step + 1) % (args.batch_factor*8) == 0:
+            if (global_step + 1) % (args.batch_factor*4) == 0:
                 optimizer_G.step()
                 optimizer_G.zero_grad()
                 scheduler_G.step()

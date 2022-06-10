@@ -75,7 +75,7 @@ def run_train(args,device):
             del cls
             # del g_model
         
-        # args.batch_factor=1
+        args.batch_factor=1
         # args.weight_decay=5e-4
         if args.working_models["H"]:
             g_model_copy_h = copy.deepcopy(g_model)
@@ -143,6 +143,7 @@ def run_train(args,device):
     print("All training took: {}".format(time_diff))   
     print(f"#################################")  
     eval_ensemble(args,device,data)
+    eval_ensemble_h(args,device,data)
     print()
 
 def eval_ensemble(args,device,data=None):
@@ -194,6 +195,42 @@ def eval_ensemble(args,device,data=None):
     print(test_score)
     print("=" * 100)
 
+
+def eval_ensemble_h(args,device,data=None):
+    if data ==None:
+        data = PC_Data(filter_genes=True,intersection=False)
+    print(f"Evaluating Ensemble")
+    first_data_set = True
+    for i,key in enumerate(data.datasets.keys()):
+        data_obj = data.datasets[key]
+        test_loader = DataLoader(dataset=data_obj.test_dataset, batch_size=len(data_obj.test_dataset))
+        cls, g = load_weights(data_obj,device,"F2")
+        with torch.no_grad():
+            cls.eval()
+            g.eval()
+            for X_test_batch, y_test_batch in test_loader:
+                X_test_batch, y_test_batch = X_test_batch.to(device), y_test_batch.to(device)
+                
+
+                #### Test with G
+                mask = g(X_test_batch)
+                cropped_features = X_test_batch*mask
+                y_pred_score_g = cls(cropped_features)
+                print(f"{key} Results F2")
+                g_test_score = evaluate(y_test_batch, y_pred_score_g)
+                print(g_test_score)
+
+                if first_data_set:
+                    y_pred_g_ens = copy.deepcopy(y_pred_score_g)
+                    first_data_set = False
+                else:
+                    y_pred_g_ens += y_pred_score_g
+    y_pred_g_ens = y_pred_g_ens/len(data.datasets.keys())
+    print("=" * 100)
+    print("Ensemble Results F2")
+    test_score = evaluate(y_test_batch, y_pred_g_ens)
+    print(test_score)
+    print("=" * 100)
 
 
 

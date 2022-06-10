@@ -132,7 +132,7 @@ def init_models(args,data,device,base = ""):
         cls = Classifier(data.n_features ,dropout=args.dropout,number_of_classes=data.number_of_classes,first_division=2)
         cls = cls.to(device)
         print("Initializing G model")
-        g_model = G_Model(data.n_features,first_division=2)
+        g_model = G_Model(data.n_features,first_division=4)
         g_model = g_model.to(device)
     return cls,g_model
     

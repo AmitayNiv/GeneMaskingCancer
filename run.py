@@ -16,19 +16,19 @@ class arguments(object):
       self.seed = 3407
       self.cls_epochs = 10
       self.g_epochs = 10
-      self.cls_lr = 0.001
+      self.cls_lr = 0.0001
       self.g_lr = 0.0002
       self.weight_decay=5e-4
       self.dropout=0.2
       self.batch_size = 50
-      self.batch_factor = 4
+      self.batch_factor = 1
       self.train_ratio = 0.7
       self.data_type =  "all"
       self.wandb_exp = False
       self.load_pretraind_weights = False
       self.save_weights = True
       self.iterations = 1
-      self.working_models = {"F":True,"g":True,"F2":False,"H":False,"XGB":False,"RF":False}
+      self.working_models = {"F":True,"g":True,"F2":True,"H":False,"XGB":False,"RF":False}
       self.task = "Train"
 
 
