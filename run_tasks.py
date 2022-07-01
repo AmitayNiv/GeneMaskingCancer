@@ -194,6 +194,7 @@ def eval_ensemble(args,device,data=None):
     test_score = evaluate(y_test_batch, y_pred_g_ens)
     print(test_score)
     print("=" * 100)
+    eval_ensemble_h(args,device,data)
 
 
 def eval_ensemble_h(args,device,data=None):
@@ -236,34 +237,34 @@ def eval_ensemble_h(args,device,data=None):
 
 
 
-# def run_create_and_save_masks(args,device,models =["G","F2","H"]):
-#     """
-#     Cerating masks and save masks to files 
+def run_create_and_save_masks(args,device,models =["G","F2"]):
+    """
+    Cerating masks and save masks to files 
 
-#     Arguments:
-#     args [obj] - Arguments
-#     device
-#     models [list] - models to create masks for
+    Arguments:
+    args [obj] - Arguments
+    device
+    models [list] - models to create masks for
 
-#     """
-#     datasets_list = load_datasets_list(args)
-#     for i,f in enumerate(datasets_list):
-#         dataset_time = time()
-#         data = Data(data_inst=f,train_ratio=args.train_ratio,features=True)
-#         print(f"Masking dataset:{data.data_name}")
-#         if not os.path.exists(f"./masks/{data.data_name}/"):
-#             os.mkdir(f"./masks/{data.data_name}/")
-#         ###########################################################
-#         for mod in models:
-#             base_print = "" if mod =="G" else mod
-#             _,g = load_weights(data,device,base_print,only_g=True)
+    """
+    datasets_list = PC_Data(filter_genes=True,intersection=False)
+    for i,key in enumerate(datasets_list.datasets.keys()):
+        data_obj = datasets_list.datasets[key]
+        dataset_time = time()
+        print(f"Masking dataset:{data_obj.data_name}")
+        if not os.path.exists(f"./masks/{data_obj.data_name}/"):
+            os.mkdir(f"./masks/{data_obj.data_name}/")
+        ###########################################################
+        for mod in models:
+            base_print = "" if mod =="G" else mod
+            _,g = load_weights(data_obj,device,base_print,only_g=True)
                 
-#             mask = get_mask(g,data,args,device)
+            mask = get_mask(g,data_obj,args,device)
 
-#             mask_df = pd.DataFrame(np.array(mask.detach().cpu(),dtype=float),columns = list(data.colnames))
-#             mask_df.to_csv(f"./masks/{data.data_name}/{mod}_mask.csv")
-#         time_diff = datetime.timedelta(seconds=time()-dataset_time)
-#         print("{}:took {}".format(data.data_name,time_diff))  
+            mask_df = pd.DataFrame(np.array(mask.detach().cpu(),dtype=float),columns = list(data_obj.colnames),index=data_obj.index)
+            mask_df.to_csv(f"./masks/{data_obj.data_name}/{mod}_mask.csv")
+        time_diff = datetime.timedelta(seconds=time()-dataset_time)
+        print("{}:took {}".format(data_obj.data_name,time_diff))  
 
 
 # def run_masks_and_vis(args,device):

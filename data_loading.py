@@ -55,6 +55,9 @@ class Single_data:
         y_all = all['response']
         all = all.drop(['response'],axis=1)
 
+        self.colnames = parent.genes
+        self.index = all.index
+
         parent.train_samples = np.intersect1d(parent.train_samples,all.index)
         parent.val_samples = np.intersect1d(parent.val_samples,all.index)
         parent.test_samples = np.intersect1d(parent.test_samples,all.index)

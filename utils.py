@@ -18,7 +18,7 @@ import datetime
 import eli5
 
 
-def get_mask(g_model,data_obj,args,device,bin_mask=False):
+def get_mask(g_model,data_obj,args,device):
     """
     Run inference of G model on entire dataset and return the provided mask by G
 
@@ -32,7 +32,7 @@ def get_mask(g_model,data_obj,args,device,bin_mask=False):
     Return:
     mask_arr [torch.tensor] - G output mask
     """
-    dataset_loader = DataLoader(dataset=data_obj.all_dataset,batch_size=len(data_obj.all_dataset)//16,shuffle=False)
+    dataset_loader = DataLoader(dataset=data_obj.all_dataset,batch_size=len(data_obj.all_dataset),shuffle=False)
     print(f"Creating mask for {data_obj.data_name}")
     first_batch = True
     with torch.no_grad():
@@ -40,8 +40,6 @@ def get_mask(g_model,data_obj,args,device,bin_mask=False):
         for X_batch, y_batch in dataset_loader:
             X_batch, y_batch = X_batch.to(device), y_batch.to(device)
             mask = g_model(X_batch)
-            if bin_mask:
-                mask = torch.where(mask>0.5,1,0)
             mask.requires_grad = False
             if first_batch:
                 mask_arr = mask

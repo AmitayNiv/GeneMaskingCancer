@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import torch
 import wandb
-from run_tasks import run_train,eval_ensemble#,run_create_and_save_masks,run_masks_and_vis,run_gsea,run_heatmap_procces,run_per_sample_gsea_compare,run_per_sample_gsea
+from run_tasks import run_train,eval_ensemble,run_create_and_save_masks#,run_masks_and_vis,run_gsea,run_heatmap_procces,run_per_sample_gsea_compare,run_per_sample_gsea
 import os
 import copy
 
@@ -29,7 +29,7 @@ class arguments(object):
       self.save_weights = True
       self.iterations = 1
       self.working_models = {"F":True,"g":True,"F2":True,"H":False,"XGB":False,"RF":False}
-      self.task = "Train"
+      self.task = "Masks"
 
 
 
@@ -52,9 +52,9 @@ def run(args):
     elif args.task =="eval_ensemble":
          print("Starting Mask Creation")
          eval_ensemble(args,device)
-    # elif args.task =="Masks Visualizatin":
-    #     print("Starting Masks Visualizatin")
-    #     run_masks_and_vis(args,device)
+    elif args.task =="Masks":
+        print("Start Masks Creation")
+        run_create_and_save_masks(args,device)
     # elif args.task =="GSEA":
     #     print("Starting GSEA Analisys")
     #     run_gsea(args,device)
