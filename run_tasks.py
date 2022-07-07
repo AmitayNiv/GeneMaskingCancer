@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import torch
 import wandb
-from data_loading import PC_Data
+from data_loading import PC_Data,CPCG_Data
 from test import test,test_xgb
 from train import train_G, train_classifier,train_xgb,train_H,train_random_forest
 from utils import get_mask, get_mask_and_mult,init_models,save_weights,load_weights,concat_average_dfs
@@ -36,7 +36,12 @@ def run_train(args,device):
     """
     ##
     time_for_file = datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
-    data = PC_Data(filter_genes=True,intersection=False)
+    if args.data_type =="Pnet":
+        data = PC_Data(filter_genes=True,intersection=False,train_ratio=args.train_ratio)
+    elif args.data_type =="CPCG":
+        data = CPCG_Data(filter_genes=True,intersection=True,train_ratio=args.train_ratio)
+    else:
+        raise "Unknown Dataset"
     first_data_set = True
     global_time = time()
 
@@ -143,7 +148,7 @@ def run_train(args,device):
     print("All training took: {}".format(time_diff))   
     print(f"#################################")  
     eval_ensemble(args,device,data)
-    eval_ensemble_h(args,device,data)
+    # eval_ensemble_h(args,device,data)
     print()
 
 def eval_ensemble(args,device,data=None):
@@ -252,8 +257,8 @@ def run_create_and_save_masks(args,device,models =["G","F2"]):
         data_obj = datasets_list.datasets[key]
         dataset_time = time()
         print(f"Masking dataset:{data_obj.data_name}")
-        if not os.path.exists(f"./masks/{data_obj.data_name}/"):
-            os.mkdir(f"./masks/{data_obj.data_name}/")
+        if not os.path.exists(f"./masks/{data_obj.dataset_name}/{data_obj.data_name}/"):
+            os.makedirs(f"./masks/{data_obj.dataset_name}/{data_obj.data_name}/")
         ###########################################################
         for mod in models:
             base_print = "" if mod =="G" else mod
@@ -262,7 +267,7 @@ def run_create_and_save_masks(args,device,models =["G","F2"]):
             mask = get_mask(g,data_obj,args,device)
 
             mask_df = pd.DataFrame(np.array(mask.detach().cpu(),dtype=float),columns = list(data_obj.colnames),index=data_obj.index)
-            mask_df.to_csv(f"./masks/{data_obj.data_name}/{mod}_mask.csv")
+            mask_df.to_csv(f"./masks/{data_obj.dataset_name}/{data_obj.data_name}/{mod}_mask.csv")
         time_diff = datetime.timedelta(seconds=time()-dataset_time)
         print("{}:took {}".format(data_obj.data_name,time_diff))  
 

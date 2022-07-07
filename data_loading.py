@@ -22,6 +22,7 @@ class ClassifierDataset(Dataset):
 class Single_data:
     def __init__(self,parent,data_type,cnv_levels):
         self.data_name = data_type
+        self.dataset_name = parent.dataset_name
         self.n_features = parent.n_features
         self.number_of_classes = parent.number_of_classes
         if self.data_name == "mut_important":
@@ -86,6 +87,7 @@ class Single_data:
 
 class PC_Data:
     def __init__(self,filter_genes=False,data_types = ['mut_important','cna_del','cna_amp'],intersection=True,known_sep=True,train_ratio=0.6):
+        self.dataset_name = "Pnet"
         self.filter_genes = filter_genes
         self.data_types = data_types
         self.intersection = intersection
@@ -161,8 +163,85 @@ class PC_Data:
         self.val_samples = validation_set
         self.test_samples = testing_set
 
+class CPCG_Data:
+    def __init__(self,filter_genes=False,data_types = ['mut_important','cna_del','cna_amp'],intersection=True,train_ratio=0.6):
+        self.dataset_name = "CPCG"
+        self.filter_genes = filter_genes
+        self.data_types = data_types
+        self.intersection = intersection
+        self.train_ratio = train_ratio
+        self.datasets = {}
+        self.number_of_classes = 1
+
+        
+
+        self.data_path = "./data/cpcg"
+        self.mut_raw_data = pd.read_csv(os.path.join(self.data_path, "mutation_raw_data.csv"),index_col=0).T
+        self.cna_raw_data = pd.read_csv(os.path.join(self.data_path, "cna_raw_data.csv"),index_col=0).T
+
+        self.get_response()
+        self.get_gene_list()
+        self.get_splits()
+
+
+        for key in self.data_types:
+            self.datasets[key] = Single_data(self,key,cnv_levels=5)
+
+
+
+    def get_response(self):
+        response = pd.read_csv(os.path.join(self.data_path, "response.csv")).set_index('id')
+        response = response[response["response"]>=0]
+        response["response"][response["response"]==2] = 0
+        self.response = response["response"]
+        self.response.index = response.index
+        # self.response = self.response[~self.response['response'].isnull()]
+
+
+    def get_gene_list(self):
+        print("Filtering Genes")
+        if self.filter_genes:
+            df = pd.read_csv("data/tcga_prostate_expressed_genes_and_cancer_genes.csv", header=0)
+            self.selected_genes = set(list(df['genes']))
+            ####
+            f = 'data/protein-coding_gene_with_coordinate_minimal.txt'
+            coding_genes_df = pd.read_csv(f, sep='\t', header=None)
+            coding_genes_df.columns = ['chr', 'start', 'end', 'name']
+            coding_genes = set(coding_genes_df['name'].unique())
+            self.selected_genes =  self.selected_genes.intersection(coding_genes)
+        
+        cols_list_set = []
+        for c in [self.mut_raw_data,self.cna_raw_data]:    
+            curr_list = set(list(c.columns))
+            if self.filter_genes:
+                curr_list = set.intersection(curr_list,self.selected_genes)
+            cols_list_set.append(curr_list)
+
+        if self.intersection:
+            cols = set.intersection(*cols_list_set)
+        else:
+            cols = set.union(*cols_list_set)
+
+        cols = np.unique(list(cols))
+        print(f"After filtering using {len(cols)} genes")
+
+        cols.sort()
+        self.genes = cols
+        self.n_features = len(cols)
+        
+
+        
+    
+    def get_splits(self):
+        training_set, test_val = train_test_split(np.array(self.response.index), shuffle=True,test_size=1-self.train_ratio ,random_state=None)
+        validation_set,testing_set = train_test_split(test_val, shuffle=True,test_size=0.5 ,random_state=None)
+        
+        self.train_samples = training_set
+        self.val_samples = validation_set
+        self.test_samples = testing_set
+
 
 if __name__ == '__main__':
-    d = PC_Data(filter_genes=True,intersection=False)
+    d = CPCG_Data(filter_genes=False,intersection=True)
     # d = PC_Data()
     print()

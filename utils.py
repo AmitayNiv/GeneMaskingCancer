@@ -149,16 +149,17 @@ def save_weights(cls,g,data,base = ""):
 
     """
     base_print = base+"_" if base != "" else base
-    if not os.path.exists(f"./weights/{data.data_name}/"):
-        os.mkdir(f"./weights/{data.data_name}/")
+    folder_path = f"./weights/{data.dataset_name}/{data.data_name}/"
+    if not os.path.exists(folder_path):
+        os.makedirs(folder_path)
     if base=="XGB":
-        cls.save_model(f"./weights/{data.data_name}/{base}.json")
+        cls.save_model(folder_path+f"{base}.json")
     elif base=="RF":
-        joblib.dump(cls, f"./weights/{data.data_name}/{base}.joblib")
+        joblib.dump(cls, folder_path+f"{base}.joblib")
     else:
-        torch.save(cls,f"./weights/{data.data_name}/{base_print}cls.pt")
-        torch.save(g,f"./weights/{data.data_name}/{base_print}g.pt")
-    print(f"{base} Models was saved to ./weights/{data.data_name}")
+        torch.save(cls,folder_path+f"{base_print}cls.pt")
+        torch.save(g,folder_path+f"{base_print}g.pt")
+    print(f"{base} Models was saved to {folder_path}")
 
 
 def load_weights(data,device,base = "",only_g=False):
@@ -178,23 +179,24 @@ def load_weights(data,device,base = "",only_g=False):
 
     """
     base_print = base+"_" if base != "" else base
+    folder_path = f"./weights/{data.dataset_name}/{data.data_name}/"
     if base =="XGB":
         print(f"Loading pre-trained weights for {base} classifier {data.data_name}")
         cls = xgb.XGBClassifier()
-        cls.load_model(f"./weights/{data.data_name}/{base}.json")
+        cls.load_model(folder_path+f"{base}.json")
         g_model = None
     elif base =="RF":
         print(f"Loading pre-trained weights for {base} classifier {data.data_name}")
-        cls = joblib.load(f"./weights/{data.data_name}/{base}.joblib")
+        cls = joblib.load(folder_path+f"{base}.joblib")
         g_model = None
     else:
         if only_g:
             cls = None
         else:
             print(f"Loading pre-trained weights for {base} classifier {data.data_name}")
-            cls = torch.load(f"./weights/{data.data_name}/{base_print}cls.pt").to(device)
+            cls = torch.load(folder_path+f"{base_print}cls.pt").to(device)
         print(f"Loading pre-trained weights for {base} G model {data.data_name}")
-        g_model = torch.load(f"./weights/{data.data_name}/{base_print}g.pt").to(device)
+        g_model = torch.load(folder_path+f"{base_print}g.pt").to(device)
     return cls,g_model
 
 

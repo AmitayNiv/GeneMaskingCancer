@@ -22,14 +22,14 @@ class arguments(object):
       self.dropout=0.2
       self.batch_size = 50
       self.batch_factor = 1
-      self.train_ratio = 0.7
-      self.data_type =  "all"
+      self.train_ratio = 0.6#0.7
+      self.data_type =  "CPCG"
       self.wandb_exp = False
       self.load_pretraind_weights = False
       self.save_weights = True
       self.iterations = 1
       self.working_models = {"F":True,"g":True,"F2":True,"H":False,"XGB":False,"RF":False}
-      self.task = "Masks"
+      self.task = "Train"
 
 
 
