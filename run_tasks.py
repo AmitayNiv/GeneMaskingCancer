@@ -37,9 +37,9 @@ def run_train(args,device):
     ##
     time_for_file = datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
     if args.data_type =="Pnet":
-        data = PC_Data(filter_genes=True,intersection=False,train_ratio=args.train_ratio)
+        data = PC_Data(filter_genes=True,intersection=True,train_ratio=args.train_ratio,for_cpcg=args.for_cpcg)
     elif args.data_type =="CPCG":
-        data = CPCG_Data(filter_genes=True,intersection=True,train_ratio=args.train_ratio)
+        data = CPCG_Data(filter_genes=True,intersection=True,train_ratio=args.train_ratio,pre_train=args.for_cpcg)
     else:
         raise "Unknown Dataset"
     first_data_set = True
@@ -64,9 +64,9 @@ def run_train(args,device):
         data_obj = data.datasets[key]
         
         if args.working_models["F"] or args.working_models["g"]:
-            cls,g_model = init_models(args=args,data=data,device=device)
+            cls,g_model = init_models(args=args,data=data_obj,device=device)
             cls,cls_res_dict = train_classifier(args,device=device,data_obj=data_obj,model=cls,wandb_exp=wandb_exp)
-            args.batch_factor=4
+            args.batch_factor = 4
             # args.weight_decay=0
             g_model ,g_res_dict= train_G(args,device,data_obj=data_obj,classifier=cls,model=g_model,wandb_exp=wandb_exp)
             res_dict.update(cls_res_dict)

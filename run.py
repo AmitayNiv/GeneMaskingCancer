@@ -16,20 +16,21 @@ class arguments(object):
       self.seed = 3407
       self.cls_epochs = 10
       self.g_epochs = 10
-      self.cls_lr = 0.0001
-      self.g_lr = 0.0002
+      self.cls_lr = 0.0001#0.0001
+      self.g_lr = 0.0002#0.0002
       self.weight_decay=5e-4
-      self.dropout=0.2
+      self.dropout=0
       self.batch_size = 50
       self.batch_factor = 1
-      self.train_ratio = 0.6#0.7
+      self.train_ratio = 0.4
       self.data_type =  "CPCG"
       self.wandb_exp = False
-      self.load_pretraind_weights = False
-      self.save_weights = True
+      self.load_pretraind_weights = True
+      self.save_weights = False
       self.iterations = 1
       self.working_models = {"F":True,"g":True,"F2":True,"H":False,"XGB":False,"RF":False}
       self.task = "Train"
+      self.for_cpcg = True
 
 
 

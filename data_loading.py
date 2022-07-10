@@ -86,15 +86,15 @@ class Single_data:
                 y_test.shape, sum(y_train), sum(y_validation), sum(y_test)))
 
 class PC_Data:
-    def __init__(self,filter_genes=False,data_types = ['mut_important','cna_del','cna_amp'],intersection=True,known_sep=True,train_ratio=0.6):
-        self.dataset_name = "Pnet"
+    def __init__(self,filter_genes=False,data_types = ['mut_important','cna_del','cna_amp'],intersection=True,known_sep=True,train_ratio=0.6,for_cpcg=False):
+        self.dataset_name = "For_cpcg" if for_cpcg else "Pnet" 
         self.filter_genes = filter_genes
         self.data_types = data_types
         self.intersection = intersection
         self.train_ratio = train_ratio
         self.datasets = {}
         self.number_of_classes = 1
-
+        self.for_cpcg = for_cpcg
         
 
         self.data_path = "./data/pnet"
@@ -119,14 +119,19 @@ class PC_Data:
     def get_gene_list(self):
         print("Filtering Genes")
         if self.filter_genes:
-            df = pd.read_csv("data/tcga_prostate_expressed_genes_and_cancer_genes.csv", header=0)
-            self.selected_genes = set(list(df['genes']))
-            ####
-            f = 'data/protein-coding_gene_with_coordinate_minimal.txt'
-            coding_genes_df = pd.read_csv(f, sep='\t', header=None)
-            coding_genes_df.columns = ['chr', 'start', 'end', 'name']
-            coding_genes = set(coding_genes_df['name'].unique())
-            self.selected_genes =  self.selected_genes.intersection(coding_genes)
+            if self.for_cpcg:
+                df = pd.read_csv("data/pnet_cpcg_genes.csv", header=0)
+                self.selected_genes = set(list(df['genes']))
+            else:
+                df = pd.read_csv("data/tcga_prostate_expressed_genes_and_cancer_genes.csv", header=0)
+                self.selected_genes = set(list(df['genes']))
+                ####
+                f = 'data/protein-coding_gene_with_coordinate_minimal.txt'
+                coding_genes_df = pd.read_csv(f, sep='\t', header=None)
+                coding_genes_df.columns = ['chr', 'start', 'end', 'name']
+                coding_genes = set(coding_genes_df['name'].unique())
+                self.selected_genes =  self.selected_genes.intersection(coding_genes)
+        
         
         cols_list_set = []
         for c in [self.mut_raw_data,self.cna_raw_data]:    
@@ -164,8 +169,8 @@ class PC_Data:
         self.test_samples = testing_set
 
 class CPCG_Data:
-    def __init__(self,filter_genes=False,data_types = ['mut_important','cna_del','cna_amp'],intersection=True,train_ratio=0.6):
-        self.dataset_name = "CPCG"
+    def __init__(self,filter_genes=False,data_types = ['mut_important','cna_del','cna_amp'],intersection=True,train_ratio=0.6,pre_train=True):
+        self.dataset_name = "For_cpcg" if pre_train else "CPCG"
         self.filter_genes = filter_genes
         self.data_types = data_types
         self.intersection = intersection
@@ -201,15 +206,8 @@ class CPCG_Data:
     def get_gene_list(self):
         print("Filtering Genes")
         if self.filter_genes:
-            df = pd.read_csv("data/tcga_prostate_expressed_genes_and_cancer_genes.csv", header=0)
+            df = pd.read_csv("data/pnet_cpcg_genes.csv", header=0)
             self.selected_genes = set(list(df['genes']))
-            ####
-            f = 'data/protein-coding_gene_with_coordinate_minimal.txt'
-            coding_genes_df = pd.read_csv(f, sep='\t', header=None)
-            coding_genes_df.columns = ['chr', 'start', 'end', 'name']
-            coding_genes = set(coding_genes_df['name'].unique())
-            self.selected_genes =  self.selected_genes.intersection(coding_genes)
-        
         cols_list_set = []
         for c in [self.mut_raw_data,self.cna_raw_data]:    
             curr_list = set(list(c.columns))
@@ -229,19 +227,30 @@ class CPCG_Data:
         self.genes = cols
         self.n_features = len(cols)
         
-
-        
     
     def get_splits(self):
-        training_set, test_val = train_test_split(np.array(self.response.index), shuffle=True,test_size=1-self.train_ratio ,random_state=None)
-        validation_set,testing_set = train_test_split(test_val, shuffle=True,test_size=0.5 ,random_state=None)
+        # training_set, test_val = train_test_split(np.array(self.response.index), shuffle=True,test_size=1-self.train_ratio ,random_state=None)
+        # validation_set,testing_set = train_test_split(test_val, shuffle=True,test_size=0.5 ,random_state=None)
+
+        index_pos = np.array(self.response[self.response==1].index)[::-1]
+        index_neg = np.array(self.response[self.response==0].index)
+        n_pos = index_pos.shape[0]
+        n_neg = index_neg.shape[0]
+
+        val_ratio = (1 - self.train_ratio)/2
+        index_pos_train = index_pos[:int(n_pos*self.train_ratio)]
+        index_neg_train = index_neg[:int(n_neg*self.train_ratio)]
+        index_pos_val = index_pos[int(n_pos*self.train_ratio):int(n_pos*self.train_ratio)+int(n_pos*val_ratio)+1]
+        index_neg_val = index_neg[int(n_neg*self.train_ratio):int(n_neg*self.train_ratio)+int(n_neg*val_ratio)+1]
+        index_pos_test = index_pos[int(n_pos*self.train_ratio)+int(n_pos*val_ratio)+1:]
+        index_neg_test = index_neg[int(n_neg*self.train_ratio)+int(n_neg*val_ratio)+1:]
         
-        self.train_samples = training_set
-        self.val_samples = validation_set
-        self.test_samples = testing_set
+        self.train_samples = np.concatenate([index_pos_train,index_neg_train]) #training_set
+        self.val_samples = np.concatenate([index_pos_val,index_neg_val]) #validation_set
+        self.test_samples = np.concatenate([index_pos_test,index_neg_test]) #testing_set
 
 
 if __name__ == '__main__':
     d = CPCG_Data(filter_genes=False,intersection=True)
-    # d = PC_Data()
+    d2 = PC_Data(filter_genes=False,intersection=True)
     print()
