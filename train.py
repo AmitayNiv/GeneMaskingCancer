@@ -41,7 +41,7 @@ def train_classifier(args,device,data_obj,model,wandb_exp):
 
     criterion = nn.BCELoss()
     optimizer = optim.Adam(model.parameters(), lr=args.cls_lr,weight_decay=args.weight_decay)
-    scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer,max_lr=float(args.cls_lr), steps_per_epoch=len(train_loader)//args.batch_factor+1, epochs=args.cls_epochs)
+    # scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer,max_lr=float(args.cls_lr), steps_per_epoch=len(train_loader)//args.batch_factor+1, epochs=args.cls_epochs)
 
     if args.wandb_exp:
         wandb_exp.config.update({"num_of_features":data_obj.n_features,"num_of_classes":data_obj.number_of_classes,"n_train":data_obj.train_samples.shape[0],
@@ -64,7 +64,7 @@ def train_classifier(args,device,data_obj,model,wandb_exp):
             if (global_step + 1) % args.batch_factor == 0:
                 optimizer.step()
                 optimizer.zero_grad()
-                scheduler.step()
+                # scheduler.step()
 
             
             train_loss += loss.item()
@@ -159,7 +159,7 @@ def train_G(args,device,data_obj,classifier,model=None,wandb_exp=None):
 
     criterion = nn.BCELoss()
     optimizer_G = optim.Adam(model.parameters(), lr=args.g_lr,weight_decay=args.weight_decay)
-    scheduler_G = torch.optim.lr_scheduler.OneCycleLR(optimizer_G,max_lr=float(args.g_lr),steps_per_epoch=len(train_loader)//args.batch_factor+1, epochs=args.g_epochs)
+    # scheduler_G = torch.optim.lr_scheduler.OneCycleLR(optimizer_G,max_lr=float(args.g_lr),steps_per_epoch=len(train_loader)//args.batch_factor+1, epochs=args.g_epochs)
 
 
     if args.wandb_exp:
@@ -183,7 +183,7 @@ def train_G(args,device,data_obj,classifier,model=None,wandb_exp=None):
             if (global_step + 1) % args.batch_factor == 0:
                 optimizer_G.step()
                 optimizer_G.zero_grad(set_to_none=True)
-                scheduler_G.step()
+                # scheduler_G.step()
             train_loss += loss.item()
             global_step +=1
         else:
@@ -298,9 +298,9 @@ def train_H(args,device,data_obj,g_model,model=None,wandb_exp=None,train_H=True)
         model = model.to(device)
     criterion = nn.BCELoss()
     optimizer = optim.Adam(model.parameters(), lr=args.cls_lr)
-    scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer,max_lr=float(args.cls_lr), steps_per_epoch=len(train_loader)//args.batch_factor+1, epochs=args.cls_epochs)
+    # scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer,max_lr=float(args.cls_lr), steps_per_epoch=len(train_loader)//args.batch_factor+1, epochs=args.cls_epochs)
     optimizer_G = optim.Adam(g_model.parameters(), lr=args.g_lr/10,weight_decay=args.weight_decay)
-    scheduler_G = torch.optim.lr_scheduler.OneCycleLR(optimizer_G,max_lr=float(args.g_lr)/10,steps_per_epoch=len(train_loader)//(args.batch_factor*4)+1, epochs=args.g_epochs)
+    # scheduler_G = torch.optim.lr_scheduler.OneCycleLR(optimizer_G,max_lr=float(args.g_lr)/10,steps_per_epoch=len(train_loader)//(args.batch_factor*4)+1, epochs=args.g_epochs)
 
 
     global_step = 0
@@ -327,12 +327,12 @@ def train_H(args,device,data_obj,g_model,model=None,wandb_exp=None,train_H=True)
             if (global_step + 1) % args.batch_factor == 0:
                 optimizer.step()
                 optimizer.zero_grad()
-                scheduler.step()
+                # scheduler.step()
 
             if (global_step + 1) % (args.batch_factor*4) == 0:
                 optimizer_G.step()
                 optimizer_G.zero_grad()
-                scheduler_G.step()
+                # scheduler_G.step()
                 
 
             

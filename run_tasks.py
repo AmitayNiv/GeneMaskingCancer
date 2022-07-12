@@ -24,6 +24,7 @@ import matplotlib.pyplot as plt
 import eli5
 import scipy
 import shap
+import shutil
 
 def run_train(args,device):
     """
@@ -39,7 +40,9 @@ def run_train(args,device):
     if args.data_type =="Pnet":
         data = PC_Data(filter_genes=True,intersection=True,train_ratio=args.train_ratio,for_cpcg=args.for_cpcg)
     elif args.data_type =="CPCG":
-        data = CPCG_Data(filter_genes=True,intersection=True,train_ratio=args.train_ratio,pre_train=args.for_cpcg)
+        data = CPCG_Data(filter_genes=True,intersection=True,train_ratio=args.train_ratio)
+        if args.load_pretraind_weights:
+            shutil.copytree("./weights/For_cpcg/","./weights/CPCG/",dirs_exist_ok=True)
     else:
         raise "Unknown Dataset"
     first_data_set = True
@@ -153,7 +156,12 @@ def run_train(args,device):
 
 def eval_ensemble(args,device,data=None):
     if data ==None:
-        data = PC_Data(filter_genes=True,intersection=False)
+        if args.data_type =="Pnet":
+            data = PC_Data(filter_genes=True,intersection=True,train_ratio=args.train_ratio,for_cpcg=args.for_cpcg)
+        elif args.data_type =="CPCG":
+            data = CPCG_Data(filter_genes=True,intersection=True,train_ratio=args.train_ratio,pre_train=args.for_cpcg)
+        else:
+            raise "Unknown Dataset"
     print(f"Evaluating Ensemble")
     first_data_set = True
     for i,key in enumerate(data.datasets.keys()):

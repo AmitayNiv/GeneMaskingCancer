@@ -152,9 +152,9 @@ def save_weights(cls,g,data,base = ""):
     folder_path = f"./weights/{data.dataset_name}/{data.data_name}/"
     if not os.path.exists(folder_path):
         os.makedirs(folder_path)
-    if base=="XGB":
+    if base == "XGB":
         cls.save_model(folder_path+f"{base}.json")
-    elif base=="RF":
+    elif base == "RF":
         joblib.dump(cls, folder_path+f"{base}.joblib")
     else:
         torch.save(cls,folder_path+f"{base_print}cls.pt")

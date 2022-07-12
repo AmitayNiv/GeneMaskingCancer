@@ -169,8 +169,8 @@ class PC_Data:
         self.test_samples = testing_set
 
 class CPCG_Data:
-    def __init__(self,filter_genes=False,data_types = ['mut_important','cna_del','cna_amp'],intersection=True,train_ratio=0.6,pre_train=True):
-        self.dataset_name = "For_cpcg" if pre_train else "CPCG"
+    def __init__(self,filter_genes=False,data_types = ['mut_important','cna_del','cna_amp'],intersection=True,train_ratio=0.6):
+        self.dataset_name = "CPCG"
         self.filter_genes = filter_genes
         self.data_types = data_types
         self.intersection = intersection
