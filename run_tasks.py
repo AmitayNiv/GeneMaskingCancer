@@ -38,7 +38,7 @@ def run_train(args,device):
     ##
     time_for_file = datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
     if args.data_type =="Pnet":
-        data = PC_Data(filter_genes=True,intersection=True,train_ratio=args.train_ratio,for_cpcg=args.for_cpcg)
+        data = PC_Data(filter_genes=True,intersection=False,train_ratio=args.train_ratio,for_cpcg=args.for_cpcg)
     elif args.data_type =="CPCG":
         data = CPCG_Data(filter_genes=True,intersection=True,train_ratio=args.train_ratio)
         if args.load_pretraind_weights:
@@ -157,7 +157,7 @@ def run_train(args,device):
 def eval_ensemble(args,device,data=None):
     if data ==None:
         if args.data_type =="Pnet":
-            data = PC_Data(filter_genes=True,intersection=True,train_ratio=args.train_ratio,for_cpcg=args.for_cpcg)
+            data = PC_Data(filter_genes=True,intersection=False,train_ratio=args.train_ratio,for_cpcg=args.for_cpcg)
         elif args.data_type =="CPCG":
             data = CPCG_Data(filter_genes=True,intersection=True,train_ratio=args.train_ratio,pre_train=args.for_cpcg)
         else:
@@ -261,12 +261,14 @@ def run_create_and_save_masks(args,device,models =["G","F2"]):
 
     """
     datasets_list = PC_Data(filter_genes=True,intersection=False)
+    
     for i,key in enumerate(datasets_list.datasets.keys()):
         data_obj = datasets_list.datasets[key]
         dataset_time = time()
         print(f"Masking dataset:{data_obj.data_name}")
-        if not os.path.exists(f"./masks/{data_obj.dataset_name}/{data_obj.data_name}/"):
-            os.makedirs(f"./masks/{data_obj.dataset_name}/{data_obj.data_name}/")
+        folder_path = f"./masks/{data_obj.dataset_name}/{data_obj.data_name}/"
+        if not os.path.exists(folder_path):
+            os.makedirs(folder_path)
         ###########################################################
         for mod in models:
             base_print = "" if mod =="G" else mod
@@ -275,7 +277,7 @@ def run_create_and_save_masks(args,device,models =["G","F2"]):
             mask = get_mask(g,data_obj,args,device)
 
             mask_df = pd.DataFrame(np.array(mask.detach().cpu(),dtype=float),columns = list(data_obj.colnames),index=data_obj.index)
-            mask_df.to_csv(f"./masks/{data_obj.dataset_name}/{data_obj.data_name}/{mod}_mask.csv")
+            mask_df.to_csv(f"{folder_path}/{mod}_mask.csv")
         time_diff = datetime.timedelta(seconds=time()-dataset_time)
         print("{}:took {}".format(data_obj.data_name,time_diff))  
 
