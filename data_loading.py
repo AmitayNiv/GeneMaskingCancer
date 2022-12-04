@@ -45,7 +45,14 @@ class Single_data:
                 self.raw[self.raw == 1.] = 0.5
                 self.raw[self.raw == 2.] = 1.0
         
-        all_cols_df = pd.DataFrame(index=parent.genes)
+        #####
+        curr_list = set(list(self.raw.columns))
+        curr_list = set.intersection(curr_list,parent.genes)
+        all_cols_df = pd.DataFrame(index=curr_list)
+        self.n_features = len(curr_list)
+        ####
+
+        # all_cols_df = pd.DataFrame(index=parent.genes)
 
         # self.raw = self.raw.loc[:,parent.genes]
         all = self.raw.T.join(all_cols_df, how='right').T
@@ -56,7 +63,7 @@ class Single_data:
         y_all = all['response']
         all = all.drop(['response'],axis=1)
 
-        self.colnames = parent.genes
+        self.colnames = curr_list#parent.genes
         self.index = all.index
 
         parent.train_samples = np.intersect1d(parent.train_samples,all.index)
@@ -77,7 +84,7 @@ class Single_data:
 
         self.all_dataset = ClassifierDataset(torch.from_numpy(all.values).float(), torch.from_numpy(y_all.values).float())
 
-        print(f"Loading {self.data_name}:\n Total {y_all.shape[0]} samples, {all.shape[1]} features")
+        print(f"Loading {self.data_name}:\n Total {y_train.shape[0]+y_test.shape[0]+y_validation.shape[0]} samples, {all.shape[1]} features")
         print(f"X_train:{x_train.shape[0]} samples || X_val:{x_validation.shape[0]} samples || X_test:{x_test.shape[0]} samples")
         print(
             "X_train:{},Y_train:{}||X_val:{},Y_val:{}||X_test:{},Y_test:{}||POS: train:{}| val:{}| test:{}".format(
@@ -86,7 +93,7 @@ class Single_data:
                 y_test.shape, sum(y_train), sum(y_validation), sum(y_test)))
 
 class PC_Data:
-    def __init__(self,filter_genes=False,data_types = ['mut_important','cna_del','cna_amp'],intersection=True,known_sep=True,train_ratio=0.6,for_cpcg=False):
+    def __init__(self,filter_genes=False,data_types = ['mut_important','cna_del','cna_amp'],intersection=False,known_sep=True,train_ratio=0.6,for_cpcg=False):
         self.dataset_name = "For_cpcg" if for_cpcg else "Pnet" 
         self.filter_genes = filter_genes
         self.data_types = data_types
@@ -107,7 +114,7 @@ class PC_Data:
 
 
         for key in self.data_types:
-            self.datasets[key] = Single_data(self,key,cnv_levels=3)
+            self.datasets[key] = Single_data(self,key,cnv_levels=5)
 
 
 

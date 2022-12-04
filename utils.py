@@ -16,6 +16,7 @@ from data_loading import PC_Data
 from time import time
 import datetime
 import eli5
+import shap
 
 
 def get_mask(g_model,data_obj,args,device):
@@ -47,6 +48,36 @@ def get_mask(g_model,data_obj,args,device):
             else:
                 mask_arr = torch.cat((mask_arr,mask), 0)
     return mask_arr
+
+def get_shap_explain(f_model,data_obj,args,device):
+    """
+    Run inference of G model on entire dataset and return the provided mask by G
+
+    Arguments:
+    g_model [obj] - G model
+    data_obj [obj] - Data object
+    args [obj] - arguments
+    device 
+    bin_mask [binary] - If to apply TH on mask results
+
+    Return:
+    mask_arr [torch.tensor] - G output mask
+    """
+    def f_f(X):
+        return torch.unsqueeze(f_model(X),0)
+
+    print(f"Creating mask for {data_obj.data_name}")
+    first_batch = True
+    with torch.no_grad():
+        f_model.eval()
+        train_dataset=data_obj.train_dataset.X_data.to(device)
+        all_dataset=data_obj.all_dataset.X_data.to(device)
+
+        explainer = shap.DeepExplainer(f_f,torch.unsqueeze(train_dataset,0))
+        shap_values = explainer(torch.unsqueeze(all_dataset,0))
+    return shap_values
+
+
 
 
 

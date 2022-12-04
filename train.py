@@ -33,15 +33,17 @@ def train_classifier(args,device,data_obj,model,wandb_exp):
     best_model_auc = 0
 
 
-    train_loader = DataLoader(dataset=data_obj.train_dataset,batch_size=args.batch_size)
-    val_loader = DataLoader(dataset=data_obj.val_dataset, batch_size=len(data_obj.val_dataset))
-    test_loader = DataLoader(dataset=data_obj.test_dataset, batch_size=len(data_obj.test_dataset))
+    train_loader = DataLoader(dataset=data_obj.train_dataset,batch_size=args.batch_size,shuffle=False)
+    val_loader = DataLoader(dataset=data_obj.val_dataset, batch_size=len(data_obj.val_dataset),shuffle=False)
+    test_loader = DataLoader(dataset=data_obj.test_dataset, batch_size=len(data_obj.test_dataset),shuffle=False)
 
 
 
     criterion = nn.BCELoss()
-    optimizer = optim.Adam(model.parameters(), lr=args.cls_lr,weight_decay=args.weight_decay)
-    # scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer,max_lr=float(args.cls_lr), steps_per_epoch=len(train_loader)//args.batch_factor+1, epochs=args.cls_epochs)
+    # optimizer = optim.Adam(model.parameters(), lr=args.cls_lr,weight_decay=args.weight_decay)
+    optimizer = optim.SGD(model.parameters(),lr=args.cls_lr,weight_decay=args.weight_decay,momentum=0.9) 
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer=optimizer,step_size=10,gamma=0.8)
+    # scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer,max_lr=float(args.cls_lr), steps_per_epoch=len(train_loader)//args.batch_factor, epochs=args.cls_epochs)
 
     if args.wandb_exp:
         wandb_exp.config.update({"num_of_features":data_obj.n_features,"num_of_classes":data_obj.number_of_classes,"n_train":data_obj.train_samples.shape[0],
@@ -58,13 +60,15 @@ def train_classifier(args,device,data_obj,model,wandb_exp):
 
             y_train_pred = model(X_train_batch)
             loss = criterion(y_train_pred, y_train_batch)
-            loss.backward()
+            
 
             
             if (global_step + 1) % args.batch_factor == 0:
+                loss.backward()
                 optimizer.step()
                 optimizer.zero_grad()
-                # scheduler.step()
+            # scheduler.step()
+                
 
             
             train_loss += loss.item()
@@ -72,7 +76,7 @@ def train_classifier(args,device,data_obj,model,wandb_exp):
             global_step += 1
         else:
             val_loss = 0
-        
+            scheduler.step()
             with torch.no_grad():
                 model.eval()
                 val_epoch_loss = 0
@@ -87,6 +91,7 @@ def train_classifier(args,device,data_obj,model,wandb_exp):
 
             print("Epoch: {}/{}.. ".format(e+1, args.cls_epochs),
                 "Training Loss: {:.5f}.. ".format(train_loss/len(train_loader)),
+                "Val Loss: {:.5f}.. ".format(val_epoch_loss/len(val_loader)),
                 "Val AUC: {:.5f}.. ".format(val_score["auc"]),
                 "Val AUPR: {:.5f}.. ".format(val_score["aupr"]),
                 "Val F1: {:.5f}.. ".format(val_score["f1"]),
@@ -153,12 +158,14 @@ def train_G(args,device,data_obj,classifier,model=None,wandb_exp=None):
 
 
 
-    train_loader = DataLoader(dataset=data_obj.train_dataset,batch_size=args.batch_size)
+    train_loader = DataLoader(dataset=data_obj.train_dataset,batch_size=args.batch_size,shuffle=False)
     val_loader = DataLoader(dataset=data_obj.val_dataset, batch_size=len(data_obj.val_dataset))
     test_loader = DataLoader(dataset=data_obj.test_dataset, batch_size=len(data_obj.test_dataset))
 
     criterion = nn.BCELoss()
     optimizer_G = optim.Adam(model.parameters(), lr=args.g_lr,weight_decay=args.weight_decay)
+    # optimizer_G = optim.SGD(model.parameters(),lr=args.g_lr,weight_decay=args.weight_decay,momentum=0.9) 
+    # scheduler_G = torch.optim.lr_scheduler.StepLR(optimizer=optimizer_G,step_size=10,gamma=0.8)
     # scheduler_G = torch.optim.lr_scheduler.OneCycleLR(optimizer_G,max_lr=float(args.g_lr),steps_per_epoch=len(train_loader)//args.batch_factor+1, epochs=args.g_epochs)
 
 
@@ -178,9 +185,9 @@ def train_G(args,device,data_obj,classifier,model=None,wandb_exp=None):
             cropped_features = X_train_batch * mask
             output = classifier(cropped_features)
             loss = criterion(output, y_train_batch) + mask.mean()
-            loss.backward()
-            
+        
             if (global_step + 1) % args.batch_factor == 0:
+                loss.backward()
                 optimizer_G.step()
                 optimizer_G.zero_grad(set_to_none=True)
                 # scheduler_G.step()
@@ -188,7 +195,7 @@ def train_G(args,device,data_obj,classifier,model=None,wandb_exp=None):
             global_step +=1
         else:
             val_losses = 0
-        
+            # scheduler_G.step()
             with torch.no_grad():
                 model.eval()
                 classifier.eval()
@@ -297,9 +304,12 @@ def train_H(args,device,data_obj,g_model,model=None,wandb_exp=None,train_H=True)
         model = Classifier(n_features ,dropout=args.dropout,number_of_classes=data_obj.number_of_classes,first_division=4)
         model = model.to(device)
     criterion = nn.BCELoss()
-    optimizer = optim.Adam(model.parameters(), lr=args.cls_lr)
+    # optimizer = optim.Adam(model.parameters(), lr=args.cls_lr)
+    optimizer = optim.SGD(model.parameters(),lr=args.cls_lr,weight_decay=args.weight_decay,momentum=0.9) 
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer=optimizer,step_size=10,gamma=0.8)
     # scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer,max_lr=float(args.cls_lr), steps_per_epoch=len(train_loader)//args.batch_factor+1, epochs=args.cls_epochs)
     optimizer_G = optim.Adam(g_model.parameters(), lr=args.g_lr/10,weight_decay=args.weight_decay)
+    # scheduler_G = torch.optim.lr_scheduler.StepLR(optimizer=optimizer_G,step_size=10,gamma=0.8)
     # scheduler_G = torch.optim.lr_scheduler.OneCycleLR(optimizer_G,max_lr=float(args.g_lr)/10,steps_per_epoch=len(train_loader)//(args.batch_factor*4)+1, epochs=args.g_epochs)
 
 
@@ -341,7 +351,8 @@ def train_H(args,device,data_obj,g_model,model=None,wandb_exp=None,train_H=True)
             global_step += 1
         else:
             val_loss = 0
-        
+            scheduler.step()
+            # scheduler_G.step()
             with torch.no_grad():
                 model.eval()
                 g_model.eval()

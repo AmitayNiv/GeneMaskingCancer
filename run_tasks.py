@@ -8,7 +8,7 @@ import wandb
 from data_loading import PC_Data,CPCG_Data
 from test import test,test_xgb
 from train import train_G, train_classifier,train_xgb,train_H,train_random_forest
-from utils import get_mask, get_mask_and_mult,init_models,save_weights,load_weights,concat_average_dfs
+from utils import get_mask, get_mask_and_mult,init_models,save_weights,load_weights,concat_average_dfs,get_shap_explain
 from visualization import visulaize_tsne, visulaize_umap
 from metrics import evaluate
 import os
@@ -38,7 +38,7 @@ def run_train(args,device):
     ##
     time_for_file = datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
     if args.data_type =="Pnet":
-        data = PC_Data(filter_genes=True,intersection=False,train_ratio=args.train_ratio,for_cpcg=args.for_cpcg)
+        data = PC_Data(filter_genes=False,intersection=False,train_ratio=args.train_ratio,for_cpcg=args.for_cpcg)
     elif args.data_type =="CPCG":
         data = CPCG_Data(filter_genes=True,intersection=True,train_ratio=args.train_ratio)
         if args.load_pretraind_weights:
@@ -70,7 +70,7 @@ def run_train(args,device):
             cls,g_model = init_models(args=args,data=data_obj,device=device)
             cls,cls_res_dict = train_classifier(args,device=device,data_obj=data_obj,model=cls,wandb_exp=wandb_exp)
             args.batch_factor = 4
-            # args.weight_decay=0
+            args.weight_decay=0
             g_model ,g_res_dict= train_G(args,device,data_obj=data_obj,classifier=cls,model=g_model,wandb_exp=wandb_exp)
             res_dict.update(cls_res_dict)
             res_dict.update(g_res_dict)
@@ -84,7 +84,7 @@ def run_train(args,device):
             # del g_model
         
         args.batch_factor=1
-        # args.weight_decay=5e-4
+        args.weight_decay=5e-4
         if args.working_models["H"]:
             g_model_copy_h = copy.deepcopy(g_model)
             h,g_model_copy_h,h_res_dict = train_H(args,device,data_obj=data_obj,g_model=g_model_copy_h,wandb_exp=None,model=None,train_H=True)
@@ -260,24 +260,27 @@ def run_create_and_save_masks(args,device,models =["G","F2"]):
     models [list] - models to create masks for
 
     """
-    datasets_list = PC_Data(filter_genes=True,intersection=False)
+    datasets_list = PC_Data(filter_genes=False,intersection=False)
     
     for i,key in enumerate(datasets_list.datasets.keys()):
         data_obj = datasets_list.datasets[key]
         dataset_time = time()
         print(f"Masking dataset:{data_obj.data_name}")
-        folder_path = f"./masks/{data_obj.dataset_name}/{data_obj.data_name}/"
+        folder_path = f"./masks/{data_obj.dataset_name}_Dec/{data_obj.data_name}/"
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
         ###########################################################
         for mod in models:
             base_print = "" if mod =="G" else mod
-            _,g = load_weights(data_obj,device,base_print,only_g=True)
-                
+            f,g = load_weights(data_obj,device,base_print,only_g=False)
+            # shap_vals = get_shap_explain(f,data_obj,args,device)
             mask = get_mask(g,data_obj,args,device)
 
             mask_df = pd.DataFrame(np.array(mask.detach().cpu(),dtype=float),columns = list(data_obj.colnames),index=data_obj.index)
             mask_df.to_csv(f"{folder_path}/{mod}_mask.csv")
+
+
+
         time_diff = datetime.timedelta(seconds=time()-dataset_time)
         print("{}:took {}".format(data_obj.data_name,time_diff))  
 

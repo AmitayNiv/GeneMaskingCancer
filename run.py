@@ -14,38 +14,42 @@ CUDA_VISIBLE_DEVICES=4
 class arguments(object):
    def __init__(self):
       self.seed = 3407
-      self.cls_epochs = 10
-      self.g_epochs = 10
-      self.cls_lr = 0.001#0.0001
-      self.g_lr = 0.1#0.0002
-      self.weight_decay=5e-4
+      self.cls_epochs = 100
+      self.g_epochs = 50
+      self.cls_lr = 0.001
+      self.g_lr = 0.0002
+      self.weight_decay = 5e-4
       self.dropout = 0.2
       self.batch_size = 50
       self.batch_factor = 1
       self.train_ratio = 0.7
-      self.data_type = "CPCG"
+      self.data_type =  "Pnet"
       self.wandb_exp = False
-      self.load_pretraind_weights = True
+      self.load_pretraind_weights = False
       self.save_weights = True
       self.iterations = 1
       self.working_models = {"F":True,"g":True,"F2":True,"H":False,"XGB":False,"RF":False}
-      self.task = "Train"
-      self.for_cpcg = True
+      self.task = "Masks"
+      self.for_cpcg = False
 
 
 
 
 def run(args):
-    ## Init random seed
-    random.seed(args.seed)
-    np.random.seed(args.seed)
-    torch.manual_seed(args.seed)
+
 
     ## Conecting to device
     device = torch.device('cuda:2' if torch.cuda.is_available() else 'cpu')
     if device != 'cpu':
         torch.cuda.empty_cache()
     print(f'Using device {device}')
+    ## Init random seed
+    random.seed(args.seed)
+    np.random.seed(args.seed)
+    torch.manual_seed(args.seed)
+    torch.cuda.manual_seed_all(args.seed)
+    torch.backends.cudnn.deterministic = True
+    
     # run_gsea(args)
     if args.task =="Train":
         print("Starting Train")

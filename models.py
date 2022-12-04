@@ -13,6 +13,11 @@ class Classifier(nn.Module):
         self.drop = nn.Dropout(p=dropout)
         self.selu = nn.SELU()
         self.sig = nn.Sigmoid()
+
+        # nn.init.normal_(self.fc1.weight, mean=0, std=2)
+        # nn.init.normal_(self.fc2.weight, mean=0, std=2)
+        # nn.init.normal_(self.fc3.weight, mean=0, std=2)
+        # nn.init.normal_(self.fc4.weight, mean=0, std=2)
              
     def forward(self, x):
         x = self.selu(self.fc1(x))
